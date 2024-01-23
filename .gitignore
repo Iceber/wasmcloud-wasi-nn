@@ -1,0 +1,8 @@
+.DS_Store
+.idea
+.vscode/
+target/
+/build
+*.par
+*.wasm
+!/hack/wasi_snapshot_preview1.proxy.wasm

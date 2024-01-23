@@ -1,0 +1,89 @@
+package wasmcloud:nn;
+
+interface nn {
+    enum error-code {
+        success,
+        // Caller module passed an invalid argument.
+        invalid-argument,
+        // Invalid encoding.
+        invalid-encoding,
+        // The operation timed out.
+        timeout,
+        // Runtime Error.
+        runtime-error,
+        // Unsupported operation.
+        unsupported-operation,
+        // Graph is too large.
+        too-large,
+        // Graph not found.
+        not-found
+    }
+
+    type tensor-dimensions = list<u32>;
+    enum tensor-type {
+        FP16,
+        FP32,
+        FP64,
+        BF16,
+        U8,
+        I32,
+        I64
+    }
+    type tensor-data = list<u8>;
+    
+    record tensor {
+        dimensions: tensor-dimensions,
+        ty: tensor-type,
+        data: tensor-data,
+    }
+
+    variant graph-encoding {
+        openvino,
+        onnx,
+        tensorflow,
+        pytorch,
+        tensorflowlite,
+        autodetect,
+        other(string),
+    }
+
+    enum execution-target {
+        cpu,
+        gpu,
+        tpu
+    }
+
+    type graph-builder = list<u8>;
+    type graph-builder-array = list<graph-builder>;
+
+    type graph = u32;
+    type graph-execution-context = u32;
+
+    // TODO(Iceber): Is there a uniform use of a structure to wrap arguments, even if the function has only one argument?
+
+    record load-request {
+        builder: graph-builder-array,
+        encoding: graph-encoding,
+        target: execution-target
+    }
+    load: func(request: load-request) -> result<graph, error-code>;
+
+    load-by-name: func(name: string) -> result<graph, error-code>;
+
+    init-execution-context: func(graph: graph) -> result<graph-execution-context, error-code>;
+
+    record set-input-request {
+        context: graph-execution-context,
+        index: u32,
+        tensor: tensor
+    }
+    set-input: func(request: set-input-request) -> result<_, error-code>;
+
+    compute: func(context: graph-execution-context) -> result<_, error-code>;
+
+    record get-output-request {
+        context: graph-execution-context,
+        index: u32
+    }
+    get-output: func(request: get-output-request) -> result<tensor-data, error-code>;
+}
